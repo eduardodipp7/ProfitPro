@@ -1,0 +1,124 @@
+{*****************************************************************************
+{*                     ROBO_PFR_V1.0 Por Eduardo Dipp                        *
+{*****************************************************************************                                                                                           
+         /\    \                  /\    \                  /\    \                  /\    \
+        /::\    \                /::\    \                /::\    \                /::\    \
+       /::::\    \               \:::\    \              /::::\    \              /::::\    \
+      /::::::\    \               \:::\    \            /::::::\    \            /::::::\    \
+     /:::/\:::\    \               \:::\    \          /:::/\:::\    \          /:::/\:::\    \
+    /:::/  \:::\    \               \:::\    \        /:::/__\:::\    \        /:::/__\:::\    \
+   /:::/    \:::\    \              /::::\    \      /::::\   \:::\    \      /::::\   \:::\    \
+  /:::/    / \:::\    \    ____    /::::::\    \    /::::::\   \:::\    \    /::::::\   \:::\    \
+ /:::/    /   \:::\ ___\  /\   \  /:::/\:::\    \  /:::/\:::\   \:::\____\  /:::/\:::\   \:::\____\
+/:::/____/     \:::|    |/::\   \/:::/  \:::\____\/:::/  \:::\   \:::|    |/:::/  \:::\   \:::|    |
+\:::\    \     /:::|____|\:::\  /:::/    \::/    /\::/    \:::\  /:::|____|\::/    \:::\  /:::|____|
+ \:::\    \   /:::/    /  \:::\/:::/    / \/____/  \/_____/\:::\/:::/    /  \/_____/\:::\/:::/    /
+  \:::\    \ /:::/    /    \::::::/    /                    \::::::/    /            \::::::/    /
+   \:::\    /:::/    /      \::::/____/                      \::::/    /              \::::/    /
+    \:::\  /:::/    /        \:::\    \                       \::/____/                \::/____/
+     \:::\/:::/    /          \:::\    \                       ~~                       ~~
+      \::::::/    /            \:::\    \
+       \::::/    /              \:::\____\
+        \::/____/                \::/    /
+         ~~                       \/____/
+
+{*****************************************************************************
+{*                     Copie, distribua e altere                             *
+{*                            *** MAS ***                                    *
+{*   NÃO VENDA e MANTENHA o banner no código ou sofra a maldição do stop!    *
+{*                                                                           *
+{*****************************************************************************
+}
+{++-++-++ Histórico de revisão
+V1.0 - 11/05/2022 - Original
+v1.1 - 11/05/2022 - Add Horario Operacional
+}
+
+Input
+  HorarioInicial(1330);
+  HorarioFinal(1735);
+  MediaRapida(8);
+  MediaLonga(80);
+  GainPontos(5);
+  LossPontos(7);
+
+var
+  SinalC,SinalV                   : Booleano;
+  StopC,StopV, mm8, mm80          : Real;
+
+Inicio 
+  {Setup}
+  mm8    :=  MediaExp(MediaRapida, Close);
+  mm80   :=  MediaExp(MediaLonga, Close);
+  SinalC := (Fechamento > Fechamento[1]) e (Low < Lowest(Low,2)[1]) e (close > mm80) e (Close > mm8);
+  SinalV := (Fechamento < Fechamento[1]) e (highest(high,2) > highest(High,2)[1]) e (close < mm80) e (Close < mm8);
+
+  if (time > HorarioFinal)or(time < HorarioInicial) then
+    inicio
+       PaintBar(ClAmarelo);
+       ClosePosition;
+    fim
+  else
+  inicio 
+  {Busca Sinal}
+  Se SinalC entao 
+       inicio
+         PaintBar(clVerde);
+         {Busca Entrada}
+             Se (Not(IsBought)) entao
+             inicio
+                BuyStop(Maxima,Maxima);  
+                StopC := Low;  
+             fim;
+       fim; 
+        
+              {Buscar saída - No alvo/stop}
+                 Se (IsBought) entao
+                   inicio
+                     SellToCoverStop(BuyPrice + GainPontos, BuyPrice + GainPontos);
+                     SellToCoverStop(BuyPrice - LossPontos, BuyPrice - LossPontos);
+     
+                           Se Minima < StopC entao SellShortAtMarket;              
+                    fim;
+
+  {Busca Sinal Venda}
+  Se SinalV entao 
+       inicio
+         PaintBar(clVermelho);
+         {Busca Entrada}
+             Se (Not(IsSold)) entao
+             inicio
+                SellShortStop(Minima,Minima);  
+                StopV := Maxima;  
+             fim;
+       fim; 
+        
+              {Buscar saída - No alvo/stop}
+                 Se (IsSold) entao
+                   inicio
+                     BuyToCoverStop(SellPrice - GainPontos, SellPrice - GainPontos);
+                     BuyToCoverStop(SellPrice + LossPontos, SellPrice + LossPontos);
+     
+                           Se Maxima > StopV entao BuyAtMarket;              
+                    fim;
+    fim;
+
+  fim; //Fim do horario operacioanal
+
+  Plot(mm8);
+  SetPlotColor(1, RGB(50, 205, 50));
+
+  Plot2(mm80);
+  SetPlotColor(2, RGB(255, 0, 0));
+
+Fim;
+
+
+
+
+
+  
+
+
+
+
